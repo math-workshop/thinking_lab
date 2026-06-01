@@ -871,9 +871,40 @@ function KvadrigaPage({ role }) {
     const IndonesiaPage = window.MMM_INDONESIA?.IndonesiaPage;
     if (IndonesiaPage) return <IndonesiaPage role={role} onBack={()=>setOpenSeason(null)}/>;
   }
+  if (openSeason === 'ambar') {
+    const AmbarPage = window.MMM_AMBAR?.AmbarPage;
+    if (AmbarPage) return <AmbarPage role={role} onBack={()=>setOpenSeason(null)}/>;
+  }
 
   // ─── Индекс ───
   const seasons = [
+    {
+      id: 'ambar',
+      year: '2023 / 2024',
+      name: 'Амбар Олимпии',
+      lead_text: 'Геометрия и логистика в древнегреческих мерах: перевезти каменные блоки, найти внутренний объём и площадь стен амбара для даров Олимпиады.',
+      tags: ['3 вопроса', 'геометрия', 'пус · пехий'],
+      bg: 'linear-gradient(135deg, #ece3cf 0%, #d6c5a0 100%)',
+      border: '#b89a64',
+      eyebrow: '#7a5a28',
+      title: '#3a2c14',
+      lead: '#3a2c14',
+      cover: (
+        <svg viewBox="0 0 220 220" style={{ width:'100%', height:'100%' }}>
+          {/* солнце */}
+          <circle cx="170" cy="56" r="20" fill="#f3c64a" opacity=".9"/>
+          {/* амбар без крыши — три яруса кладки */}
+          {/* верхний ярус — малые блоки */}
+          {[0,1,2,3,4,5].map(c => <rect key={'s'+c} x={40+c*23} y={92} width="22" height="13" fill="#8fa0bc" stroke="#54648a" strokeWidth="1.5"/>)}
+          {/* средний ярус — средние блоки */}
+          {[0,1,2].map(r => [0,1,2].map(c => <rect key={'m'+r+'-'+c} x={40+c*46+(r%2)*0} y={106+r*16} width="45" height="15" fill="#9aa86a" stroke="#5a6a32" strokeWidth="1.5"/>))}
+          {/* нижний ярус — большие блоки */}
+          {[0,1,2].map(c => <rect key={'b'+c} x={40+c*46} y={156} width="45" height="40" fill="#c98a5e" stroke="#8a5230" strokeWidth="1.8"/>)}
+          {/* дверной проём */}
+          <rect x="120" y="166" width="22" height="30" fill="#3a2c1a"/>
+        </svg>
+      ),
+    },
     {
       id: 'indonesia',
       year: '2024 / 2025',

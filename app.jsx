@@ -254,6 +254,8 @@ function TeacherHome({ setSection, hero = 'discover3' }) {
     original:   { eyebrow: 'Учителю · программа курса', title: 'Учим думать и считать — не списывать готовое.' },
   };
   const H = HEADLINES[hero] || HEADLINES.discover3;
+  const [startKonspekt, setStartKonspekt] = uS(null);
+  const introK = (window.MMM_KONSPEKTY ? window.MMM_KONSPEKTY.KONSPEKTY.find(k => k.slug === 'quadrivium1') : null);
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--pad-lg)' }}>
@@ -278,6 +280,25 @@ function TeacherHome({ setSection, hero = 'discover3' }) {
           <MathDoodle kind="div" size={24} color="#c4724a"/>
         </div>
       </header>
+
+      {/* С чего начать — вводный урок курса */}
+      {introK && (
+        <button onClick={()=>setStartKonspekt(introK)} className="mmm-card" style={{
+          cursor:'pointer', font:'inherit', textAlign:'left', padding: 0, overflow:'hidden',
+          display:'flex', alignItems:'stretch', gap: 0, borderLeft:`4px solid ${introK.accent}`,
+        }}>
+          <div style={{ flex:'0 0 auto', width: 92, background: introK.soft, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap: 2 }}>
+            <span style={{ fontFamily:'var(--serif)', fontSize: 32, fontWeight: 700, color: introK.accent, lineHeight: 1 }}>01</span>
+            <span style={{ fontFamily:'var(--mono)', fontSize: 10, color: introK.accent, letterSpacing:'.04em' }}>урок&nbsp;1</span>
+          </div>
+          <div style={{ flex:'1 1 auto', minWidth: 0, padding:'18px 22px', display:'flex', flexDirection:'column', gap: 5 }}>
+            <p className="mmm-eyebrow" style={{ color: introK.accent, margin: 0 }}>С чего начать · самый первый урок курса</p>
+            <h3 style={{ margin: 0, fontFamily:'var(--serif)', fontSize: 21, fontWeight: 700, lineHeight: 1.15 }}>{introK.title}</h3>
+            <p className="mmm-body" style={{ margin: 0, fontSize: 13, color:'var(--ink-soft)' }}>Вводное занятие во всех параллелях: знакомство с героями Квадом и Риви и со всеми типами задач курса. С него начинается путешествие по Квадривиуму.</p>
+          </div>
+          <div style={{ flex:'0 0 auto', alignSelf:'center', paddingRight: 22, fontSize: 13, fontWeight: 600, color: introK.accent, whiteSpace:'nowrap' }}>Открыть урок →</div>
+        </button>
+      )}
 
       {/* Главные рабочие тайлы */}
       <section>
@@ -435,6 +456,7 @@ function TeacherHome({ setSection, hero = 'discover3' }) {
         </div>
         <button className="mmm-btn ghost" onClick={()=>setSection('about')}>Об авторах →</button>
       </footer>
+      {startKonspekt && <window.MMM_KONSPEKTY.KonspektDetail k={startKonspekt} onClose={()=>setStartKonspekt(null)}/>}
     </div>
   );
 }
@@ -924,7 +946,7 @@ function TasksPage({ role }) {
       <aside style={{ flex: '0 0 230px', display: 'flex', flexDirection: 'column', gap: 'var(--pad)', position: 'sticky', top: 0, alignSelf: 'flex-start' }}>
         <div>
           <p className="mmm-eyebrow">Фильтры</p>
-          <input className="mmm-input" placeholder="Поиск..." value={q} onChange={e=>setQ(e.target.value)} style={{width:'100%'}}/>
+          <input className="mmm-input" placeholder="Поиск…" value={q} onChange={e=>setQ(e.target.value)} style={{width:'100%'}}/>
         </div>
         <div>
           <h3 className="mmm-h3">Класс</h3>
