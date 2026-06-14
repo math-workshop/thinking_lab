@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Математические гонки — Поле А3</title>
+<style>
+  @page {
+    size: A3 portrait;
+    margin: 0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    width: 297mm;
+    height: 420mm;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #fff;
+    overflow: hidden;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── ВНЕШНЯЯ РАМКА всего листа ─────────────── */
+  .sheet {
+    width: 297mm;
+    height: 420mm;
+    padding: 8mm;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── ШАПКА ──────────────────────────────────── */
+  .page-header {
+    height: 18mm;
+    display: flex;
+    align-items: center;
+    padding: 0 1mm 0 1mm;
+    border-bottom: 2px solid #222;
+    margin-bottom: 3mm;
+    gap: 5mm;
+    flex-shrink: 0;
+  }
+  .title-main {
+    font-size: 13.5pt;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #111;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-right: 5mm;
+    border-right: 1.5px solid #ccc;
+  }
+  .meta-fields {
+    flex: 1;
+    display: flex;
+    gap: 8mm;
+    align-items: flex-end;
+  }
+  .meta-field { display: flex; flex-direction: column; gap: 1.5mm; }
+  .meta-label {
+    font-size: 6pt;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    font-weight: 700;
+  }
+  .meta-line {
+    border-bottom: 1.5px solid #444;
+    height: 5.5mm;
+    min-width: 72mm;
+  }
+  .meta-line.short { min-width: 26mm; }
+
+  /* ── ИГРОВОЕ ПОЛЕ ───────────────────────────── */
+  .field-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #222;
+    border-radius: 2mm;
+    overflow: hidden;
+  }
+
+  /* Заголовки колонок */
+  .col-headers {
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    flex-shrink: 0;
+    border-bottom: 2.5px solid #222;
+  }
+  .col-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22mm;
+    border-right: 1.5px solid rgba(255,255,255,0.18);
+  }
+  .col-header:last-child { border-right: none; }
+  .col-number {
+    font-size: 20pt;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  /* Сетка ячеек (flex: 1 — занимает всё оставшееся место) */
+  .cells-area {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+  }
+  .cell {
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    background: #fff;
+  }
+  /* Убираем правую границу у последней колонки */
+  .cell:nth-child(11n) { border-right: none; }
+  /* Убираем нижнюю границу у последнего ряда */
+  .cell:nth-child(n+102) { border-bottom: none; }
+
+  /* ── ФИНИШНАЯ ПОЛОСА ────────────────────────── */
+  .finish-strip {
+    height: 5mm;
+    display: grid;
+    grid-template-columns: repeat(22, 1fr);
+    flex-shrink: 0;
+    border-top: 2px solid #222;
+    overflow: hidden;
+  }
+  .finish-cell-dark  { background: #222; }
+  .finish-cell-light { background: #fff; }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ШАПКА -->
+  <div class="page-header">
+    <div class="title-main">Математические гонки</div>
+    <div class="meta-fields">
+      <div class="meta-field">
+        <div class="meta-label">Имя и фамилия</div>
+        <div class="meta-line"></div>
+      </div>
+      <div class="meta-field">
+        <div class="meta-label">Моя ставка — машинка&nbsp;№</div>
+        <div class="meta-line short"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОЛЕ -->
+  <div class="field-wrap">
+
+    <!-- Заголовки -->
+    <div class="col-headers" id="colHeaders"></div>
+
+    <!-- Ячейки 11×10 -->
+    <div class="cells-area" id="cellsArea"></div>
+
+    <!-- Финиш -->
+    <div class="finish-strip" id="finishStrip"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── яркие цвета, каждый номер уникален ──────────
+const GRAYS = {
+   2: { bg: '#E53935', txt: '#fff' },   // красный
+   3: { bg: '#F4511E', txt: '#fff' },   // оранжево-красный
+   4: { bg: '#FB8C00', txt: '#fff' },   // оранжевый
+   5: { bg: '#F9A825', txt: '#111' },   // жёлтый
+   6: { bg: '#43A047', txt: '#fff' },   // зелёный
+   7: { bg: '#1E88E5', txt: '#fff' },   // синий
+   8: { bg: '#8E24AA', txt: '#fff' },   // фиолетовый
+   9: { bg: '#00ACC1', txt: '#fff' },   // бирюзовый
+  10: { bg: '#D81B60', txt: '#fff' },   // малиновый
+  11: { bg: '#6D4C41', txt: '#fff' },   // коричневый
+  12: { bg: '#546E7A', txt: '#fff' },   // сланцевый
+};
+const NUMS = [2,3,4,5,6,7,8,9,10,11,12];
+
+// Заголовки
+const hdrEl = document.getElementById('colHeaders');
+NUMS.forEach(n => {
+  const d = document.createElement('div');
+  d.className = 'col-header';
+  d.style.background = GRAYS[n].bg;
+  const sp = document.createElement('span');
+  sp.className = 'col-number';
+  sp.style.color = GRAYS[n].txt;
+  sp.textContent = n;
+  d.appendChild(sp);
+  hdrEl.appendChild(d);
+});
+
+// Ячейки: 11 колонок × 10 строк = 110 ячеек
+const cellsEl = document.getElementById('cellsArea');
+for (let i = 0; i < 110; i++) {
+  const d = document.createElement('div');
+  d.className = 'cell';
+  cellsEl.appendChild(d);
+}
+
+// Финиш: чередование 22 блоков
+const fs = document.getElementById('finishStrip');
+for (let i = 0; i < 22; i++) {
+  const d = document.createElement('div');
+  d.className = i % 2 === 0 ? 'finish-cell-dark' : 'finish-cell-light';
+  fs.appendChild(d);
+}
+</script>
+</body>
+</html>
