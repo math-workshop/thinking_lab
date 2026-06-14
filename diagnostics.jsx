@@ -296,6 +296,7 @@ function DTM({ onHome, role }) {
   const [answers, setAnswers] = dS({}); // { '1a': text, '1b': text, ... }
   const [scores, setScores] = dS({});   // { '1a': 0-3, '1b': 0-2, '1a_mark':'1-у' }
   const [showKey, setShowKey] = dS(false);
+  const [form, setForm] = dS('А'); // 'А' — входная (сентябрь) · 'Б' — итоговая (май)
 
   if (!grade) {
     return (
@@ -309,12 +310,12 @@ function DTM({ onHome, role }) {
           </p>
           <div className="mmm-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 18 }}>
             <button className="mmm-card" onClick={()=>setGrade('1-2')} style={{ cursor:'pointer', font:'inherit', textAlign:'left', padding: 20, borderLeft:'4px solid var(--terra)' }}>
-              <p className="mmm-eyebrow" style={{ margin:0 }}>Вариант А</p>
+              <p className="mmm-eyebrow" style={{ margin:0 }}>Младшая ступень</p>
               <h3 style={{ margin:'4px 0 6px', fontFamily:'var(--serif)', fontSize: 22 }}>1–2 классы</h3>
               <p className="mmm-body" style={{ margin:0, fontSize: 13 }}>Фрукты в корзине · 3 цвета карандашей · разрезание 3×4</p>
             </button>
             <button className="mmm-card" onClick={()=>setGrade('3-4')} style={{ cursor:'pointer', font:'inherit', textAlign:'left', padding: 20, borderLeft:'4px solid var(--olive)' }}>
-              <p className="mmm-eyebrow" style={{ margin:0 }}>Вариант Б</p>
+              <p className="mmm-eyebrow" style={{ margin:0 }}>Старшая ступень</p>
               <h3 style={{ margin:'4px 0 6px', fontFamily:'var(--serif)', fontSize: 22 }}>3–4 классы</h3>
               <p className="mmm-body" style={{ margin:0, fontSize: 13 }}>Шахматы и шашки · игра «Последний» · доминошки 4×4 и 3×3</p>
             </button>
@@ -324,7 +325,7 @@ function DTM({ onHome, role }) {
     );
   }
 
-  const blocks = DTM_BLOCKS[grade];
+  const blocks = (form === 'Б' && window.MMM_DTM_B ? window.MMM_DTM_B.DTM_BLOCKS_B : DTM_BLOCKS)[grade];
   const setAns = (k, v) => setAnswers(a => ({ ...a, [k]: v }));
   const setScr = (k, v) => setScores(s => ({ ...s, [k]: v }));
 
@@ -345,7 +346,14 @@ function DTM({ onHome, role }) {
     <div className="diag-print" style={{ maxWidth: 820, margin:'0 auto', display:'flex', flexDirection:'column', gap: 18 }}>
       <div className="diag-toolbar" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap: 8 }}>
         <DCrumb onHome={onHome} className="diag-toolbar"/>
-        <div style={{ display:'flex', gap: 8 }}>
+        <div style={{ display:'flex', gap: 8, alignItems:'center' }}>
+          <div style={{ display:'flex', border:'1px solid var(--paper-3)', borderRadius:8, overflow:'hidden' }}>
+            {['А','Б'].map(f => (
+              <button key={f} onClick={()=>setForm(f)} style={{ font:'inherit', fontSize:12, padding:'6px 12px',
+                border:'none', cursor:'pointer', background: form===f ? 'var(--terra)' : 'transparent',
+                color: form===f ? '#fff' : 'var(--ink)' }}>Форма {f}</button>
+            ))}
+          </div>
           <button className="mmm-btn ghost" onClick={()=>window.print()} style={{ fontSize: 12, padding:'6px 12px' }}>🖨 Печать бланка</button>
           <button className="mmm-btn ghost" onClick={()=>setGrade(null)} style={{ fontSize: 12, padding:'6px 12px' }}>↺ Сменить вариант</button>
         </div>
@@ -353,7 +361,7 @@ function DTM({ onHome, role }) {
 
       {/* Шапка бланка */}
       <div className="mmm-card" style={{ padding: 22 }}>
-        <p className="mmm-eyebrow">ДТМ · Бланк для {grade} классов</p>
+        <p className="mmm-eyebrow">ДТМ · Форма {form} ({form === 'А' ? 'входная, сентябрь' : 'итоговая, май'}) · бланк для {grade} классов</p>
         <h1 className="mmm-h2" style={{ marginTop: 6 }}>Диагностический тест математического мышления</h1>
         <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr', gap: 12, marginTop: 14, fontSize: 13 }}>
           <label>Имя, фамилия ученика<input value={meta.name} onChange={e=>setMeta(m=>({...m,name:e.target.value}))} style={inputStyle}/></label>

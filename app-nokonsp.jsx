@@ -4,38 +4,6 @@
 const { useState: uS, useEffect: uE, useMemo: uM, useRef: uR } = React;
 
 // ───── ШАПКА ─────
-function NavItem({ s, section, setSection }) {
-  const [open, setOpen] = uS(false);
-  const ref = uR(null);
-  uE(() => {
-    if (!open) return;
-    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
-  if (!s.children) {
-    return <button className={section===s.id?'active':''} onClick={()=>setSection(s.id)}>{s.label}</button>;
-  }
-  const activeChild = s.children.some(c => c.id === section);
-  return (
-    <span ref={ref} style={{ position:'relative', display:'inline-flex' }}>
-      <button className={activeChild?'active':''} onClick={()=>setOpen(o=>!o)}>{s.label} ▾</button>
-      {open && (
-        <div style={{ position:'absolute', top:'100%', left:0, zIndex:60, marginTop:6, minWidth:200,
-          background:'var(--paper)', border:'1px solid var(--line)', borderRadius:10,
-          boxShadow:'0 10px 28px rgba(0,0,0,.14)', padding:6, display:'flex', flexDirection:'column', gap:2 }}>
-          {s.children.map(c => (
-            <button key={c.id} onClick={()=>{ setSection(c.id); setOpen(false); }}
-              style={{ font:'inherit', textAlign:'left', padding:'8px 12px', borderRadius:6, border:'none',
-                cursor:'pointer', whiteSpace:'nowrap', fontSize:14, color:'var(--ink)',
-                background: section===c.id ? 'var(--paper-2)' : 'transparent' }}>{c.label}</button>
-          ))}
-        </div>
-      )}
-    </span>
-  );
-}
-
 function TopBar({ section, setSection, role, setRole, sections }) {
   return (
     <div className="mmm-topbar">
@@ -48,7 +16,7 @@ function TopBar({ section, setSection, role, setRole, sections }) {
       </button>
       <nav className="mmm-nav">
         {sections.map(s => (
-          <NavItem key={s.id || s.label} s={s} section={section} setSection={setSection}/>
+          <button key={s.id} className={section===s.id?'active':''} onClick={()=>setSection(s.id)}>{s.label}</button>
         ))}
       </nav>
       {role && (
@@ -335,14 +303,10 @@ function TeacherHome({ setSection, hero = 'discover3' }) {
       {/* Главные рабочие тайлы */}
       <section>
         <p className="mmm-eyebrow">Главное</p>
-        <div className="mmm-grid" style={{ gridTemplateColumns:'repeat(3, 1fr)' }}>
+        <div className="mmm-grid" style={{ gridTemplateColumns:'repeat(2, 1fr)' }}>
           {[
-            { id:'konspekts', t:'Конспекты занятий', s:`Готовые конспекты уроков: о занятии, центральная идея, цели К1–К5 и ход. ${window.MMM_KONSPEKTY ? window.MMM_KONSPEKTY.READY_COUNT : 3} из 20 готовы.`, tag:'terra' },
-            { id:'guide', t:'Как устроен курс', s:'Оргмодель, расписание, схема занятия на 80 мин и роль педагога по классам.', tag:'mustard' },
-            { id:'teachkit', t:'Методкабинет', s:'Сквозные инструменты учителя: сигнальная карточка, банк открытых вопросов, карточки-маяки.', tag:'olive' },
             { id:'modules', t:'Теоретические материалы', s:'Методика, 5 компонентов мышления (К1–К5), континуум подачи задач.', tag:'olive' },
             { id:'tasks', t:'База задач', s:`${TASKS.length} нестандартных задач с фильтрами по К1–К5, модулям, классам, источникам.`, tag:'indigo' },
-            { id:'kvadriga', t:'«Квадрига»', s:'Авторские задачи финала интегрированной олимпиады: каждый сезон — свой мир и герои, где сюжет ведёт к математическому вопросу.', tag:'terra' },
           ].map((t, i) => (
             <button key={i} className="mmm-card" onClick={()=>setSection(t.id)}
               style={{ cursor:'pointer', font:'inherit', textAlign:'left', display:'flex', flexDirection:'column', gap: 10, padding: '20px 18px', minHeight: 150 }}>
@@ -470,7 +434,7 @@ function TeacherHome({ setSection, hero = 'discover3' }) {
       {/* Доп. инструменты учителя */}
       <section className="mmm-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {[
-          { id:'diagnostic', t:'Диагностика', s:'ДТМ онлайн (автоподсчёт по К1–К5), КПН, ОПМ, эссе и портфолио — с печатью бланков.' },
+          { id:'diagnostic', t:'Диагностика', s:'ДТМ онлайн · 15 вопросов · автоподсчёт по К1–К5. КПН и ОПМ — бланки.' },
           { id:'tools', t:'Инструменты на проектор', s:'Кубики, монета, числовая прямая, сосуды, таймер, случайный выбор.' },
           { id:'games', t:'Игры для класса', s:'Судоку 4×4, ним, магический квадрат — для работы в парах и на перемене.' },
         ].map(t => (
@@ -553,6 +517,12 @@ function ModuleDetail({ module: m, onClose, setSection, role }) {
   });
   uE(() => { try { localStorage.setItem('mmm_selection', JSON.stringify(selection)); } catch (e) {} }, [selection]);
   const toggleSel = (id) => setSelection(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  // Generated lesson list
+  const lessons = Array.from({length: m.lessons}, (_,i) => ({
+    num: i+1,
+    title: `Занятие ${i+1}`,
+    duration: 40,
+  }));
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(40,30,20,.45)', zIndex: 100, display: 'grid', placeItems: 'center', padding: 20 }} onClick={onClose}>
@@ -575,12 +545,14 @@ function ModuleDetail({ module: m, onClose, setSection, role }) {
         </div>
 
         <div style={{ marginTop: 22 }}>
-          <h3 className="mmm-h3">Состав модуля</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            <span className="mmm-tag">Занятий по программе: {m.lessons}</span>
-            <span className="mmm-tag">Готовых конспектов: {moduleKonspekts.length}</span>
-            <span className="mmm-tag">Задач в банке: {moduleTasks.length}</span>
-            <span className="mmm-tag">Доля нарратива: {Math.round(m.narrative * 100)}%</span>
+          <h3 className="mmm-h3">Занятия модуля</h3>
+          <div className="mmm-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
+            {lessons.map(l => (
+              <div key={l.num} className="mmm-card" style={{ padding: 10, fontSize: 12.5 }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-mute)' }}>№{l.num} · {l.duration} мин</div>
+                <div style={{ fontFamily: 'var(--serif)', fontWeight: 600, marginTop: 2 }}>{l.title}</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -1009,15 +981,15 @@ function TasksPage({ role }) {
       </aside>
 
       <main style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', gap: 'var(--pad)', minWidth: 0 }}>
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', flexWrap:'wrap', gap:'8px 16px'}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
           <div>
             <p className="mmm-eyebrow">База задач</p>
-            <h1 className="mmm-h1" style={{whiteSpace:'nowrap'}}>Найдено: {filtered.length} <span style={{color:'var(--ink-mute)', fontSize: 18}}>из {TASKS.length}</span></h1>
+            <h1 className="mmm-h1">Найдено: {filtered.length} <span style={{color:'var(--ink-mute)', fontSize: 18}}>из {TASKS.length}</span></h1>
           </div>
-          <div style={{display:'flex', gap:6, flexWrap:'wrap'}}>
-            <button className="mmm-btn ghost" style={{whiteSpace:'nowrap'}} onClick={()=>setExportData({ tasks: selectedTasks, summary: 'Моя подборка', autoPrint: false, clearable: true })} disabled={selection.length===0} title={selection.length===0 ? 'Подборка пуста — добавьте задачи кнопкой «В подборку»' : 'Открыть подборку для печати/PDF'}>★ Подборка ({selection.length})</button>
-            {selection.length > 0 && <button className="mmm-btn ghost" style={{whiteSpace:'nowrap'}} onClick={()=>{ if (confirm('Очистить подборку?')) setSelection([]); }} title="Очистить подборку">✕ Очистить</button>}
-            <button className="mmm-btn ghost" style={{whiteSpace:'nowrap'}} onClick={()=>setExportData({ tasks: filtered, summary: filterSummary, autoPrint: false })} disabled={filtered.length===0} title={filtered.length===0 ? 'Нет задач для экспорта' : 'Сформировать PDF из всех найденных задач'}>⤓ Экспорт</button>
+          <div style={{display:'flex', gap:6}}>
+            <button className="mmm-btn ghost" onClick={()=>setExportData({ tasks: selectedTasks, summary: 'Моя подборка', autoPrint: false, clearable: true })} disabled={selection.length===0} title={selection.length===0 ? 'Подборка пуста — добавьте задачи кнопкой «В подборку»' : 'Открыть подборку для печати/PDF'}>★ Подборка ({selection.length})</button>
+            {selection.length > 0 && <button className="mmm-btn ghost" onClick={()=>{ if (confirm('Очистить подборку?')) setSelection([]); }} title="Очистить подборку">✕ Очистить</button>}
+            <button className="mmm-btn ghost" onClick={()=>setExportData({ tasks: filtered, summary: filterSummary, autoPrint: false })} disabled={filtered.length===0} title={filtered.length===0 ? 'Нет задач для экспорта' : 'Сформировать PDF из всех найденных задач'}>⤓ Экспорт</button>
           </div>
         </div>
         <div className="mmm-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
@@ -1335,25 +1307,16 @@ function MMMApp({ paletteClass = 'palette-warm', density = 'normal', hero = 'dis
   const teacherSections = [
     { id: 'home', label: 'Главная' },
     { id: 'modules', label: 'Программа' },
-    { label: 'Методика', children: [
-      { id: 'guide', label: 'Как устроен курс' },
-      { id: 'teachkit', label: 'Методкабинет' },
-    ] },
-    { id: 'konspekts', label: 'Конспекты' },
-    { id: 'readinglab', label: 'Лаборатория чтения' },
     { id: 'tasks', label: 'Задачи' },
     { id: 'kvadriga', label: '«Квадрига»' },
     { id: 'diagnostic', label: 'Диагностика' },
-    { label: 'Для класса', children: [
-      { id: 'tools', label: 'Инструменты' },
-      { id: 'games', label: 'Игры' },
-    ] },
+    { id: 'tools', label: 'Инструменты' },
+    { id: 'games', label: 'Игры' },
     { id: 'about', label: 'Авторы' },
   ];
   const studentSections = [
     { id: 'home', label: 'Главная' },
     { id: 'tasks', label: 'Задачи' },
-    { id: 'readinglab', label: 'Лаборатория чтения' },
     { id: 'kvadriga', label: '«Квадрига»' },
     { id: 'games', label: 'Игры' },
     { id: 'tools', label: 'Инструменты' },
@@ -1363,13 +1326,10 @@ function MMMApp({ paletteClass = 'palette-warm', density = 'normal', hero = 'dis
   const Page = {
     home: () => <HomePage setSection={setSection} role={role} setRole={setRole} hero={hero}/>,
     modules: () => <ModulesPage role={role} setSection={setSection}/>,
-    guide: () => <window.MMM_COURSE_GUIDE.CourseGuidePage/>,
     konspekts: () => <window.MMM_KONSPEKTY.KonspektyPage/>,
-    readinglab: () => <window.MMM_READING_LAB.ReadingLabPage role={role}/>,
     tasks: () => <TasksPage role={role}/>,
     diagnostic: () => <DiagnosticPage role={role}/>,
     tools: () => <ToolsPage role={role}/>,
-    teachkit: () => <window.MMM_TEACHER_TOOLS.TeacherToolsPage/>,
     games: () => <GamesPage role={role}/>,
     kvadriga: () => <window.MMM_KVADRIGA.KvadrigaPage role={role}/>,
     about: () => <AboutPage/>,

@@ -297,3 +297,25 @@ input.mmm-input:focus, select.mmm-input:focus {
 }
 .variant-notebook .mmm-h1 { font-family: var(--serif); }
 .variant-notebook .mmm-card { background: #fdfaee; }
+
+/* ─────────────────────────────────────────────────────────────
+   ПЕЧАТЬ — снять фикс-высоту оболочки приложения.
+   На экране сайт — это полноэкранная колонка фикс-высоты со
+   скроллом внутри .mmm-page (height:100%; overflow:hidden/auto).
+   При печати это ужимало весь бланк в ОДИН лист со скроллом сбоку
+   и без разбивки на страницы. Здесь снимаем замок: высота auto,
+   overflow visible — браузер сам разбивает контент по страницам A4.
+   Печать через порталы (.mtk-/.qd-/.mmm-export-portal) прячет #root
+   целиком, поэтому этим правилам не мешает.
+   ───────────────────────────────────────────────────────────── */
+@media print {
+  html, body, #root, .mmm-root, .mmm-page {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .mmm-root, .mmm-page { display: block !important; }
+  .mmm-page { padding: 0 !important; }
+  .mmm-topbar, .mmm-paper-bg { display: none !important; }
+}
