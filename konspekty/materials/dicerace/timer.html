@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Таймер — Математические гонки</title>
+<style>
+  /* ═══ СБРОС И БАЗА ════════════════════════════════════ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: #111;
+    color: #eee;
+    font-family: 'Arial', Helvetica, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ═══ ОБЁРТКА ════════════════════════════════════════ */
+  #app {
+    width: 100%;
+    max-width: 800px;
+    padding: 24px 32px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  /* ═══ ЗАГОЛОВОК ══════════════════════════════════════ */
+  .page-title {
+    font-size: 13pt;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #666;
+  }
+
+  /* ═══ ОСНОВНОЙ БЛОК (номер броска + кольцо) ══════════ */
+  .main-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    width: 100%;
+  }
+
+  /* — номер броска — */
+  .throw-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    min-width: 200px;
+  }
+  .throw-label {
+    font-size: 11pt;
+    font-weight: 700;
+    letter-spacing: 5px;
+    color: #777;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .throw-number {
+    font-size: 108pt;
+    font-weight: 900;
+    color: #fff;
+    line-height: 0.9;
+    min-width: 2ch;
+    text-align: center;
+    transition: color 0.2s;
+  }
+  .throw-number.flash {
+    animation: numFlash 0.45s ease-out forwards;
+  }
+  .throw-total {
+    font-size: 13pt;
+    color: #555;
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  @keyframes numFlash {
+    0%   { transform: scale(1.0);  color: #fff; }
+    25%  { transform: scale(1.32); color: #ffd966; }
+    100% { transform: scale(1.0);  color: #fff; }
+  }
+
+  /* — кольцо обратного отсчёта — */
+  .ring-wrap {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    flex-shrink: 0;
+  }
+  .ring-wrap svg { width: 100%; height: 100%; }
+
+  .ring-bg {
+    fill: none;
+    stroke: #2a2a2a;
+    stroke-width: 10;
+  }
+  .ring-arc {
+    fill: none;
+    stroke: #bbb;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+    transition: stroke 0.3s;
+  }
+  .ring-num {
+    font-size: 64pt;
+    font-weight: 900;
+    fill: #ddd;
+    text-anchor: middle;
+    dominant-baseline: central;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  /* пульс при броске */
+  .ring-wrap.pulse {
+    animation: ringPulse 0.4s ease-out;
+  }
+  @keyframes ringPulse {
+    0%   { transform: scale(1.0); }
+    40%  { transform: scale(1.08); }
+    100% { transform: scale(1.0); }
+  }
+
+  /* ═══ ПРОГРЕСС-БАР ════════════════════════════════════ */
+  .progress-outer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .progress-track {
+    width: 100%;
+    height: 12px;
+    background: #2a2a2a;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(to right, #888 0%, #ccc 50%, #888 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9pt;
+    color: #555;
+    padding: 0 2px;
+  }
+  /* маркеры под прогресс-баром: числа 2–12 */
+  .progress-markers {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+  }
+  .progress-markers span {
+    font-size: 7pt;
+    color: #3a3a3a;
+    width: 24px;
+    text-align: center;
+  }
+
+  /* ═══ СТАТУСНОЕ СООБЩЕНИЕ ════════════════════════════ */
+  .status-box {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15pt;
+    font-weight: 700;
+    width: 100%;
+    transition: all 0.3s;
+    visibility: hidden;
+    opacity: 0;
+    letter-spacing: 0.5px;
+  }
+  .status-box.visible {
+    visibility: visible;
+    opacity: 1;
+  }
+  .status-box.info    { background: #1e2a1e; color: #7fc97f; border: 1.5px solid #3a5a3a; }
+  .status-box.warn    { background: #2a2a1a; color: #ffd966; border: 1.5px solid #5a5a1a; }
+  .status-box.finish  { background: #1a1a2a; color: #88aaff; border: 1.5px solid #3a3a6a; }
+
+  /* ═══ КНОПКИ УПРАВЛЕНИЯ ══════════════════════════════ */
+  .controls {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .btn {
+    padding: 12px 28px;
+    font-size: 13pt;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .btn:active:not(:disabled) { transform: scale(0.96); }
+  .btn:disabled { opacity: 0.28; cursor: default; }
+
+  .btn-start  { background: #3a3a3a; color: #eee; border: 1.5px solid #666; }
+  .btn-start:hover:not(:disabled) { background: #555; }
+
+  .btn-pause  { background: #2a2a2a; color: #ddd; border: 1.5px solid #555; }
+  .btn-pause:hover:not(:disabled) { background: #444; }
+
+  .btn-reset  { background: #1e1e1e; color: #888; border: 1.5px solid #333; }
+  .btn-reset:hover:not(:disabled) { background: #2a2a2a; color: #bbb; }
+
+  .btn-resume {
+    background: #1e3a1e; color: #7fc97f;
+    border: 2px solid #4a8a4a; font-size: 14pt;
+    padding: 14px 36px;
+  }
+  .btn-resume:hover { background: #2a4a2a; }
+
+  /* ═══ ГРОМКОСТЬ ══════════════════════════════════════ */
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 9pt;
+    color: #444;
+  }
+  #volSlider {
+    -webkit-appearance: none;
+    width: 100px; height: 4px;
+    background: #333; border-radius: 2px; outline: none;
+    cursor: pointer;
+  }
+  #volSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: #888; border-radius: 50%;
+  }
+
+  /* ═══ ФИНИШ-ЭКРАН ════════════════════════════════════ */
+  #finishOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,10,20,0.97);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 100;
+  }
+  #finishOverlay.show { display: flex; }
+  .finish-flag {
+    font-size: 72pt;
+    line-height: 1;
+    letter-spacing: 8px;
+  }
+  .finish-title {
+    font-size: 38pt;
+    font-weight: 900;
+    color: #ffd966;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+  }
+  .finish-sub {
+    font-size: 14pt;
+    color: #888;
+    letter-spacing: 2px;
+  }
+  .finish-reset {
+    margin-top: 16px;
+    padding: 14px 40px;
+    font-size: 13pt;
+    font-weight: 700;
+    background: #2a2a2a;
+    color: #eee;
+    border: 1.5px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+  .finish-reset:hover { background: #444; }
+
+  /* ═══ ПРОМЕЖУТОЧНАЯ ПАУЗА ════════════════════════════ */
+  #midPauseOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,20,10,0.96);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 99;
+  }
+  #midPauseOverlay.show { display: flex; }
+  .midpause-icon  { font-size: 48pt; line-height: 1; }
+  .midpause-title { font-size: 26pt; font-weight: 900; color: #7fc97f; letter-spacing: 2px; }
+  .midpause-text  { font-size: 13pt; color: #aaa; text-align: center; line-height: 1.6; max-width: 460px; }
+  .midpause-count { font-size: 18pt; font-weight: 700; color: #ffd966; }
+</style>
+</head>
+<body>
+
+<!-- ═══ ПРОМЕЖУТОЧНАЯ ПАУЗА (15-й бросок) ════════════ -->
+<div id="midPauseOverlay">
+  <div class="midpause-icon">✋</div>
+  <div class="midpause-title">СТОП — ПОЛОВИНА!</div>
+  <div class="midpause-text">
+    Проверьте черточки на своём поле.<br>
+    Должно быть ровно <strong>15 черточек</strong>.<br>
+    Кто не успел — добавьте прямо сейчас.
+  </div>
+  <div class="midpause-count">15 из 30 бросков выполнено</div>
+  <button class="btn btn-resume" id="btnResume">▶ ПРОДОЛЖИТЬ</button>
+</div>
+
+<!-- ═══ ФИНИШ ═════════════════════════════════════════ -->
+<div id="finishOverlay">
+  <div class="finish-flag">&#9873;&#9873;</div>
+  <div class="finish-title">ФИНИШ!</div>
+  <div class="finish-sub">30 бросков выполнено — смотрим на поля!</div>
+  <button class="finish-reset" id="btnFinishReset">↺ Новая гонка</button>
+</div>
+
+<!-- ═══ ОСНОВНОЙ ЭКРАН ════════════════════════════════ -->
+<div id="app">
+
+  <div class="page-title">Математические гонки</div>
+
+  <!-- Номер броска + кольцо -->
+  <div class="main-display">
+
+    <div class="throw-block">
+      <div class="throw-label">Бросок</div>
+      <div class="throw-number" id="throwNum">—</div>
+      <div class="throw-total" id="throwTotal">из&nbsp;30</div>
+    </div>
+
+    <div class="ring-wrap" id="ringWrap">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- фон кольца -->
+        <circle class="ring-bg" cx="100" cy="100" r="82"/>
+        <!-- активная дуга -->
+        <circle class="ring-arc" id="ringArc"
+          cx="100" cy="100" r="82"
+          stroke-dasharray="515.2"
+          stroke-dashoffset="0"/>
+        <!-- число внутри -->
+        <text class="ring-num" id="ringNum" x="100" y="104">—</text>
+      </svg>
+    </div>
+
+  </div>
+
+  <!-- Прогресс-бар -->
+  <div class="progress-outer">
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-label">
+      <span id="progressLeft">0 бросков</span>
+      <span id="progressRight">осталось 30</span>
+    </div>
+  </div>
+
+  <!-- Статусное сообщение -->
+  <div class="status-box" id="statusBox"></div>
+
+  <!-- Кнопки -->
+  <div class="controls">
+    <button class="btn btn-start"  id="btnStart">&#9654; СТАРТ</button>
+    <button class="btn btn-pause"  id="btnPause"  disabled>&#9646;&#9646; ПАУЗА</button>
+    <button class="btn btn-reset"  id="btnReset">&#8635; СБРОС</button>
+  </div>
+
+  <!-- Громкость -->
+  <div class="vol-row">
+    <span>&#128266;</span>
+    <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.38">
+    <span id="volLabel">38%</span>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  КОНСТАНТЫ
+// ═══════════════════════════════════════════════════════
+const TOTAL_THROWS   = 30;
+const INTERVAL_MS    = 10_000;   // 10 секунд
+const CIRC           = 2 * Math.PI * 82; // ≈ 515.2 — длина дуги r=82
+const MID_THROW      = 15;       // пауза после 15-го броска
+
+// ═══════════════════════════════════════════════════════
+//  СОСТОЯНИЕ
+// ═══════════════════════════════════════════════════════
+let phase        = 'idle';   // idle | running | paused | mid-pause | done
+let throwsDone   = 0;
+let segStart     = null;     // performance.now() начала текущего интервала
+let pausedElapsed = 0;       // сколько прошло на момент паузы
+let animId       = null;
+let audioCtx     = null;
+let volume       = 0.38;
+
+// ═══════════════════════════════════════════════════════
+//  ЭЛЕМЕНТЫ DOM
+// ═══════════════════════════════════════════════════════
+const elThrowNum   = document.getElementById('throwNum');
+const elThrowTotal = document.getElementById('throwTotal');
+const elRingArc    = document.getElementById('ringArc');
+const elRingNum    = document.getElementById('ringNum');
+const elRingWrap   = document.getElementById('ringWrap');
+const elProgress   = document.getElementById('progressFill');
+const elProgLeft   = document.getElementById('progressLeft');
+const elProgRight  = document.getElementById('progressRight');
+const elStatus     = document.getElementById('statusBox');
+const elBtnStart   = document.getElementById('btnStart');
+const elBtnPause   = document.getElementById('btnPause');
+const elBtnReset   = document.getElementById('btnReset');
+const elBtnResume  = document.getElementById('btnResume');
+const elBtnFReset  = document.getElementById('btnFinishReset');
+const elMidPause   = document.getElementById('midPauseOverlay');
+const elFinish     = document.getElementById('finishOverlay');
+const elVolSlider  = document.getElementById('volSlider');
+const elVolLabel   = document.getElementById('volLabel');
+
+// ═══════════════════════════════════════════════════════
+//  ЗВУК — тёплый колокол (Web Audio API)
+// ═══════════════════════════════════════════════════════
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playBell() {
+  ensureAudio();
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(volume, now);
+  master.connect(ctx.destination);
+
+  // Три синус-осциллятора: основной + квинта + октава
+  // Частоты: 440 Гц (ля), 660 Гц (ми), 880 Гц (ля+8)
+  // Тёплый, не резкий тон с мягким затуханием
+  const partials = [
+    { f: 440,  g: 0.55, d: 2.8 },   // основной тон
+    { f: 660,  g: 0.25, d: 1.8 },   // квинта (+7 полутонов)
+    { f: 880,  g: 0.12, d: 1.1 },   // октава
+    { f: 1320, g: 0.04, d: 0.7 },   // тихая высокая гармоника
+  ];
+
+  partials.forEach(({ f, g, d }) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, now);
+
+    // атака 12 мс → плавное экспоненциальное затухание
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(g, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + d);
+
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(now);
+    osc.stop(now + d + 0.05);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  ОСНОВНОЙ ЦИКЛ АНИМАЦИИ (requestAnimationFrame)
+// ═══════════════════════════════════════════════════════
+function loop(ts) {
+  if (phase !== 'running') return;
+
+  const elapsed  = ts - segStart;                        // мс прошло в текущем интервале
+  const fraction = Math.min(elapsed / INTERVAL_MS, 1.0); // 0..1
+
+  // Обновляем кольцо (убывает по мере истечения времени)
+  elRingArc.setAttribute('stroke-dashoffset', (fraction * CIRC).toFixed(2));
+
+  // Секунды до следующего броска
+  const secsLeft = Math.max(0, Math.ceil((INTERVAL_MS - elapsed) / 1000));
+  elRingNum.textContent = secsLeft;
+
+  if (fraction >= 1.0) {
+    // ── Время вышло → новый бросок ──────────────────
+    throwsDone++;
+    triggerThrow(ts);
+    return; // triggerThrow запустит следующий кадр или остановит
+  }
+
+  animId = requestAnimationFrame(loop);
+}
+
+// ─────────────────────────────────────────────────────
+//  Действия при очередном броске
+// ─────────────────────────────────────────────────────
+function triggerThrow(ts) {
+  playBell();
+  flashThrowNumber();
+  pulseRing();
+  updateDisplay();
+
+  if (throwsDone === MID_THROW) {
+    // Промежуточная пауза после 15-го броска
+    phase = 'mid-pause';
+    setTimeout(() => elMidPause.classList.add('show'), 300);
+    return;
+  }
+
+  if (throwsDone >= TOTAL_THROWS) {
+    // Финиш!
+    phase = 'done';
+    setTimeout(() => elFinish.classList.add('show'), 400);
+    elBtnPause.disabled = true;
+    return;
+  }
+
+  // Продолжаем — сброс интервала
+  segStart = ts;
+  animId = requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════════════════
+//  ОБНОВЛЕНИЕ UI
+// ═══════════════════════════════════════════════════════
+function updateDisplay() {
+  // Номер броска
+  elThrowNum.textContent = throwsDone > 0 ? throwsDone : '—';
+
+  // Прогресс-бар
+  const pct = (throwsDone / TOTAL_THROWS) * 100;
+  elProgress.style.width = pct + '%';
+  elProgLeft.textContent  = throwsDone + ' ' + nounBrosok(throwsDone);
+  elProgRight.textContent = 'осталось ' + (TOTAL_THROWS - throwsDone);
+
+  // Статус
+  showStatus(null);
+}
+
+function flashThrowNumber() {
+  elThrowNum.classList.remove('flash');
+  // Форсируем reflow для повторного запуска анимации
+  void elThrowNum.offsetWidth;
+  elThrowNum.classList.add('flash');
+  setTimeout(() => elThrowNum.classList.remove('flash'), 500);
+}
+
+function pulseRing() {
+  elRingWrap.classList.remove('pulse');
+  void elRingWrap.offsetWidth;
+  elRingWrap.classList.add('pulse');
+  setTimeout(() => elRingWrap.classList.remove('pulse'), 450);
+}
+
+function showStatus(msg, type = 'info') {
+  if (!msg) {
+    elStatus.classList.remove('visible', 'info', 'warn', 'finish');
+    return;
+  }
+  elStatus.textContent = msg;
+  elStatus.className = 'status-box visible ' + type;
+}
+
+function setIdleDisplay() {
+  elThrowNum.textContent = '—';
+  elRingArc.setAttribute('stroke-dashoffset', '0');
+  elRingNum.textContent = '—';
+  elProgress.style.width = '0%';
+  elProgLeft.textContent  = '0 бросков';
+  elProgRight.textContent = 'осталось 30';
+  showStatus(null);
+}
+
+// ═══════════════════════════════════════════════════════
+//  УПРАВЛЕНИЕ
+// ═══════════════════════════════════════════════════════
+
+// СТАРТ
+elBtnStart.addEventListener('click', () => {
+  if (phase !== 'idle') return;
+  ensureAudio();
+  phase = 'running';
+
+  // Первый бросок — сразу
+  throwsDone = 1;
+  playBell();
+  flashThrowNumber();
+  pulseRing();
+  updateDisplay();
+
+  elBtnStart.disabled = true;
+  elBtnPause.disabled = false;
+
+  segStart = performance.now();
+  elRingArc.setAttribute('stroke-dashoffset', '0');
+  elRingNum.textContent = '10';
+  animId = requestAnimationFrame(loop);
+});
+
+// ПАУЗА / ПРОДОЛЖИТЬ
+elBtnPause.addEventListener('click', () => {
+  if (phase === 'running') {
+    // → пауза
+    phase = 'paused';
+    pausedElapsed = performance.now() - segStart;
+    cancelAnimationFrame(animId);
+    elBtnPause.innerHTML = '&#9654; ПРОДОЛЖИТЬ';
+    showStatus('Пауза', 'warn');
+
+  } else if (phase === 'paused') {
+    // → продолжаем
+    phase = 'running';
+    segStart = performance.now() - pausedElapsed;
+    elBtnPause.innerHTML = '&#9646;&#9646; ПАУЗА';
+    showStatus(null);
+    animId = requestAnimationFrame(loop);
+  }
+});
+
+// ПРОДОЛЖИТЬ после промежуточной паузы
+elBtnResume.addEventListener('click', () => {
+  elMidPause.classList.remove('show');
+  phase = 'running';
+  segStart = performance.now();
+  elRingArc.setAttribute('stroke-dashoffset', '0');
+  elRingNum.textContent = '10';
+  elBtnPause.disabled = false;
+  animId = requestAnimationFrame(loop);
+});
+
+// СБРОС
+elBtnReset.addEventListener('click', doReset);
+elBtnFReset.addEventListener('click', () => {
+  elFinish.classList.remove('show');
+  doReset();
+});
+
+function doReset() {
+  cancelAnimationFrame(animId);
+  phase = 'idle';
+  throwsDone = 0;
+  segStart = null;
+  pausedElapsed = 0;
+  elMidPause.classList.remove('show');
+  elFinish.classList.remove('show');
+  elBtnStart.disabled = false;
+  elBtnPause.disabled = true;
+  elBtnPause.innerHTML = '&#9646;&#9646; ПАУЗА';
+  setIdleDisplay();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ГРОМКОСТЬ
+// ═══════════════════════════════════════════════════════
+elVolSlider.addEventListener('input', () => {
+  volume = parseFloat(elVolSlider.value);
+  elVolLabel.textContent = Math.round(volume * 100) + '%';
+});
+
+// ═══════════════════════════════════════════════════════
+//  УТИЛИТА: склонение слова «бросок»
+// ═══════════════════════════════════════════════════════
+function nounBrosok(n) {
+  const mod10  = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 19) return 'бросков';
+  if (mod10 === 1) return 'бросок';
+  if (mod10 >= 2 && mod10 <= 4) return 'броска';
+  return 'бросков';
+}
+</script>
+</body>
+</html>

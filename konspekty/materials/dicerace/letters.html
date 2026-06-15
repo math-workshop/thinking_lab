@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Карточки-буквы — ВЕРОЯТНОСТЬ</title>
+<style>
+  @page { size: A5 portrait; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .card {
+    width: 148mm; height: 210mm;
+    page-break-after: always;
+    display: flex; flex-direction: column;
+    padding: 10mm;
+    border: 6mm solid var(--c);
+  }
+  .card:last-child { page-break-after: auto; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .qnum {
+    font-size: 15pt; font-weight: 900; color: var(--c);
+    border: 2px solid var(--c); border-radius: 6px; padding: 2mm 4mm;
+  }
+  .pos { font-size: 12pt; font-weight: 700; color: #999; }
+  .letter {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 110mm; font-weight: 900; color: var(--c); line-height: 1;
+  }
+  .question {
+    font-size: 13pt; line-height: 1.35; color: #222; text-align: center;
+    border-top: 1.5px solid #ddd; padding-top: 4mm; min-height: 26mm;
+  }
+  .answer { font-size: 10.5pt; color: #888; margin-top: 2mm; font-style: italic; }
+</style>
+</head>
+<body id="root">
+<script>
+const CARDS = [
+  { L:'В', q:'Какое самое маленькое число можно получить как сумму двух кубиков?', a:'2 (это 1+1)' },
+  { L:'Е', q:'А самое большое?', a:'12 (это 6+6)' },
+  { L:'Р', q:'Можно ли получить 1? Почему?', a:'Нет: минимум 1+1=2' },
+  { L:'О', q:'Можно ли получить 13? Почему?', a:'Нет: максимум 6+6=12' },
+  { L:'Я', q:'Какое число выпадало чаще всего?', a:'7 (у большинства)' },
+  { L:'Т', q:'Почему оно выпадало чаще?', a:'У 7 больше всего способов — 6 пар' },
+  { L:'Н', q:'Перечисли все способы получить 7.', a:'1+6, 2+5, 3+4, 4+3, 5+2, 6+1' },
+  { L:'О', q:'Сколько способов получить 2?', a:'Один: только 1+1' },
+  { L:'С', q:'Какие числа похожи по «силе»?', a:'2 и 12, 3 и 11, 4 и 10, 5 и 9, 6 и 8' },
+  { L:'Т', q:'Почему 6 и 8 ведут себя одинаково?', a:'У них по 5 пар — одинаково далеко от 7' },
+  { L:'Ь', q:'Что нужно, чтобы число выпадало часто?', a:'Много способов его получить' },
+];
+const COLORS = ['#E53935','#F4511E','#FB8C00','#F9A825','#43A047','#1E88E5','#8E24AA','#00ACC1','#D81B60','#6D4C41','#546E7A'];
+const root = document.getElementById('root');
+CARDS.forEach((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.setProperty('--c', COLORS[i]);
+  card.innerHTML = `
+    <div class="top">
+      <span class="qnum">Вопрос ${i+1}</span>
+      <span class="pos">${i+1} / 11</span>
+    </div>
+    <div class="letter">${c.L}</div>
+    <div class="question">${c.q}<div class="answer">Ответ: ${c.a}</div></div>`;
+  root.appendChild(card);
+});
+</script>
+</body>
+</html>
