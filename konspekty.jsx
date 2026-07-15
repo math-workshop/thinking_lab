@@ -601,6 +601,7 @@
     // не резолвится при клике по <a download>, поэтому сначала тянем файл в память.
     async function getBlobUrl() {
       if (/^(blob:|data:)/.test(printUrl)) return printUrl;
+      if (window.MMM_PDF) { try { return await window.MMM_PDF.stampedBlobUrl(printUrl); } catch (e) {} }
       const r = await fetch(printUrl);
       if (!r.ok) throw new Error('http ' + r.status);
       const b = await r.blob();
@@ -638,15 +639,19 @@
       if (busy || !k.worksheet) return; setBusy('ws');
       const wsUrl = pdfUrl(k.worksheet.slug);
       try {
-        let url = wsUrl;
-        if (!/^(blob:|data:)/.test(wsUrl)) {
-          const r = await fetch(wsUrl); if (!r.ok) throw new Error('http ' + r.status);
-          url = URL.createObjectURL(new Blob([await r.blob()], { type: 'application/pdf' }));
+        if (window.MMM_PDF && !/^(blob:|data:)/.test(wsUrl)) {
+          await window.MMM_PDF.download(wsUrl, `${k.worksheet.slug}.pdf`);
+        } else {
+          let url = wsUrl;
+          if (!/^(blob:|data:)/.test(wsUrl)) {
+            const r = await fetch(wsUrl); if (!r.ok) throw new Error('http ' + r.status);
+            url = URL.createObjectURL(new Blob([await r.blob()], { type: 'application/pdf' }));
+          }
+          const a = document.createElement('a');
+          a.href = url; a.download = `${k.worksheet.slug}.pdf`;
+          document.body.appendChild(a); a.click(); a.remove();
+          if (url !== wsUrl) setTimeout(() => URL.revokeObjectURL(url), 30000);
         }
-        const a = document.createElement('a');
-        a.href = url; a.download = `${k.worksheet.slug}.pdf`;
-        document.body.appendChild(a); a.click(); a.remove();
-        if (url !== wsUrl) setTimeout(() => URL.revokeObjectURL(url), 30000);
       } catch (e) {
         window.open(wsUrl, '_blank', 'noopener');
       } finally { setBusy(null); }
@@ -660,6 +665,7 @@
         : ext === 'html' || ext === 'htm' ? 'text/html'
         : 'application/octet-stream';
       if (e) e.preventDefault();
+      if (ext === 'pdf' && window.MMM_PDF) { try { await window.MMM_PDF.open(href); return; } catch (er) {} }
       try {
         const r = await fetch(href);
         if (!r.ok) throw new Error('http ' + r.status);

@@ -200,15 +200,19 @@
     const downloadPdf = async () => {
       if (dl) return; setDl(true);
       try {
-        let url = pdf;
-        if (!/^(blob:|data:)/.test(pdf)) {
-          const r = await fetch(pdf); const b = await r.blob();
-          url = URL.createObjectURL(new Blob([b], { type: 'application/pdf' }));
+        if (window.MMM_PDF && !/^(blob:|data:)/.test(pdf)) {
+          await window.MMM_PDF.download(pdf, 'ambar-olimpii-uslovie.pdf');
+        } else {
+          let url = pdf;
+          if (!/^(blob:|data:)/.test(pdf)) {
+            const r = await fetch(pdf); const b = await r.blob();
+            url = URL.createObjectURL(new Blob([b], { type: 'application/pdf' }));
+          }
+          const a = document.createElement('a');
+          a.href = url; a.download = 'ambar-olimpii-uslovie.pdf';
+          document.body.appendChild(a); a.click(); a.remove();
+          if (url !== pdf) setTimeout(() => URL.revokeObjectURL(url), 30000);
         }
-        const a = document.createElement('a');
-        a.href = url; a.download = 'ambar-olimpii-uslovie.pdf';
-        document.body.appendChild(a); a.click(); a.remove();
-        if (url !== pdf) setTimeout(() => URL.revokeObjectURL(url), 30000);
       } catch (e) { window.open(pdf, '_blank', 'noopener'); }
       finally { setDl(false); }
     };

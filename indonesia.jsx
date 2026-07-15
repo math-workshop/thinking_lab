@@ -724,7 +724,7 @@ function IndonesiaPage({ role, onBack }) {
             Задача знакомит детей с двумя классическими типами графовых задач (Эйлеров и Гамильтонов обход) через нарратив об эпохе Великих открытий. В Части III используются простые расчёты «скорость · время = расстояние» с модификаторами от течений и согласование стартовых дней.
           </p>
           <div style={{ display:'flex', gap: 8, flexWrap:'wrap' }}>
-            <a className="mmm-btn ghost" href="kvadriga-indonesia-task.pdf" target="_blank" rel="noopener" style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Полный текст задачи (PDF)</a>
+            <a className="mmm-btn ghost" href="kvadriga-indonesia-task.pdf" target="_blank" rel="noopener" onClick={(e)=>{ if(window.MMM_PDF){ e.preventDefault(); window.MMM_PDF.open('kvadriga-indonesia-task.pdf'); } }} style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Полный текст задачи (PDF)</a>
           </div>
         </div>
       )}

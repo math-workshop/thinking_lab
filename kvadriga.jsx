@@ -1054,8 +1054,8 @@ function IntroScreen({ role, onStart }) {
             Задача построена по принципу <i>«сюжет → математический вопрос»</i>: каждая глава истории даёт один параметр модели, который нужно вычислить. Это нарративный подход — он помогает погрузить ребёнка в исторический и математический контекст. Подсказки выдаются ступенчато — от наводящего вопроса до полного решения.
           </p>
           <div style={{ display:'flex', gap: 8, flexWrap:'wrap' }}>
-            <a className="mmm-btn ghost" href="kvadriga-etap1-telegramma.pdf" target="_blank" rel="noopener" style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 1. Телеграмма (PDF)</a>
-            <a className="mmm-btn ghost" href="kvadriga-etap2-zadacha.pdf" target="_blank" rel="noopener" style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 2. Условие задачи (PDF)</a>
+            <a className="mmm-btn ghost" href="kvadriga-etap1-telegramma.pdf" target="_blank" rel="noopener" onClick={(e)=>{ if(window.MMM_PDF){ e.preventDefault(); window.MMM_PDF.open('kvadriga-etap1-telegramma.pdf'); } }} style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 1. Телеграмма (PDF)</a>
+            <a className="mmm-btn ghost" href="kvadriga-etap2-zadacha.pdf" target="_blank" rel="noopener" onClick={(e)=>{ if(window.MMM_PDF){ e.preventDefault(); window.MMM_PDF.open('kvadriga-etap2-zadacha.pdf'); } }} style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 2. Условие задачи (PDF)</a>
           </div>
         </div>
       )}
@@ -1104,8 +1104,8 @@ function StagesScreen({ role, solvedCount, handleSolve, resetKey, onReset }) {
             Задача построена по принципу <i>«сюжет → математический вопрос»</i>: каждая глава истории даёт один параметр модели, который нужно вычислить. Это нарративный подход — он помогает погрузить ребёнка в исторический и математический контекст. Подсказки выдаются ступенчато: от наводящего вопроса до полного решения.
           </p>
           <div style={{ display:'flex', gap: 8, flexWrap:'wrap' }}>
-            <a className="mmm-btn ghost" href="kvadriga-etap1-telegramma.pdf" target="_blank" rel="noopener" style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 1. Телеграмма (PDF)</a>
-            <a className="mmm-btn ghost" href="kvadriga-etap2-zadacha.pdf" target="_blank" rel="noopener" style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 2. Условие задачи (PDF)</a>
+            <a className="mmm-btn ghost" href="kvadriga-etap1-telegramma.pdf" target="_blank" rel="noopener" onClick={(e)=>{ if(window.MMM_PDF){ e.preventDefault(); window.MMM_PDF.open('kvadriga-etap1-telegramma.pdf'); } }} style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 1. Телеграмма (PDF)</a>
+            <a className="mmm-btn ghost" href="kvadriga-etap2-zadacha.pdf" target="_blank" rel="noopener" onClick={(e)=>{ if(window.MMM_PDF){ e.preventDefault(); window.MMM_PDF.open('kvadriga-etap2-zadacha.pdf'); } }} style={{ fontSize: 13, padding:'8px 14px', textDecoration:'none' }}>⤓ Этап 2. Условие задачи (PDF)</a>
           </div>
         </div>
       )}
